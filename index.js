@@ -3,7 +3,7 @@ require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } });
 //monaco editorを初期化している
 require(['vs/editor/editor.main'], function () {
   let editor = monaco.editor.create(document.getElementById('editor'), {
-    value: 'console.log("Hello, Monaco Editor!");',
+    value: '//Hello, Monaco Editor!',
     language: 'javascript',
     theme: 'vs-dark'
   });

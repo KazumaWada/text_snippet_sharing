@@ -129,7 +129,35 @@ url を表示する
 ってことは検証のコードと DB のスキーマを考える。
 今のゴール
 node と DB を繋げて、データを入れる
-次のゴール
-データを入れたら、成功しましたというメッセージを client に表示する
 
 一旦 push する。通信ができたコードを。そして db に入る。
+今
+mysql 接続でエラーが起こっている。その原因は多分 root で実行しているからだと思う。
+今
+mysql のユーザーを(snippet)変えて、データベースも snippet_db にしたけどまだエラーが残っている。
+
+code: 'ER_NOT_SUPPORTED_AUTH_MODE',
+errno: 1251,
+sqlMessage: 'Client does not support authentication protocol requested by server; consider upgrading MySQL client',
+sqlState: '08004',
+fatal: true
+
+ユーザー設定で with を追加してみる
+
+ALTER USER 'snippet'@'localhost' IDENTIFIED WITH mysql_native_password BY 'wmkm0511';
+↑
+with をつけて接続する事ができた。
+
+次のゴール
+クライアントデータを db に入れて、コマンドで db 内に入っているか確認する。
+db にデータ入ってた!
++------+-------------------------+
+| id | content |
++------+-------------------------+
+| NULL | //Hello, Monaco Editor! |
+| NULL | //Hello, Monaco Editor! |
++------+-------------------------+
+2 rows in set (0.00 sec)
+
+今
+格納したデータを取ってきて、parse_url ライブラリで表示する。
