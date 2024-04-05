@@ -1,4 +1,4 @@
-//ここにはnodeとdbを接続するためだけのコードが書かれている。
+//ここにはnodeとdbを接続, db関連のするためだけのコードが書かれている。
 const mysql = require('mysql');
 
 // データベースへの接続情報
@@ -9,6 +9,9 @@ const connection = mysql.createConnection({
     database: 'snippet_db'
 });
 
+// //server.jsでもconection変数を使えるようにする。
+// module.exports = connection;
+
 // データベースに接続
 connection.connect((err) => {
     if (err) {
@@ -18,4 +21,21 @@ connection.connect((err) => {
     console.log('データベースに接続しました。');
 });
 
-exports.connection = connection; // 他のファイルから接続を使えるようにする
+// DBにあるデータを取得(これをさらにクライアントに送りたい。)
+connection.query('SELECT * FROM departments', (err, results, fields) => {
+    if (err) {
+      console.error('クエリ実行中にエラーが発生しました。エラー:', err);
+      return;
+    }
+    console.log('取得したデータ:', results);
+  });
+
+// server側でimportした時にqueryを定義していないといけないから。
+function query(sql, callback) {
+  connection.query(sql, callback);
+}
+
+module.exports = {
+  connection: connection,
+  query: query
+}
