@@ -27,7 +27,7 @@ connection.query('SELECT * FROM departments', (err, results, fields) => {
       console.error('クエリ実行中にエラーが発生しました。エラー:', err);
       return;
     }
-    console.log('取得したデータ:', results);
+    //console.log('取得したデータ:', results);
   });
 
 // server側でimportした時にqueryを定義していないといけないから。

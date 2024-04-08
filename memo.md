@@ -199,11 +199,76 @@ show all は、/all の URL に移動して表示させる。
 今は、all.html に移動させたから fetch の root と違うからエラーが起きている。
 続き fetch の URL を/all に変更する。
 
-続き
-一旦全部戻して、push する。
+リファクタリングの時に/all とかを作る。いちいち root を変える作業をしていたら、時間がかかるだろうし。
+↓
+今日やること:
+
+- send -> "your snippet is successfully saved!(link here)"
+  key をつけて送信する。
+  そもそもなぜ key が必要なのか自分で理解する
+  うーん。自分で考えた方がもっと簡単に実装できるかも。
+  parse_url というライブラリはないが、ランダムな文字列を生成してそれを localhost の root の後に追加するというやり方ならできる。
+  そのランダムな文字列とデータを db で一緒に管理する必要がある。(link がシェアされた時に、その key の value を表示する事ができるから。)
+  ////////////////////////////////////////////////
+  //フェーズ 01//
+  client: {ランダムな数字: userInput}で送信//done!
+  server: {ランダムな数字: userInput}を DB に送信する
+  db: テーブルに{key:値}が成立するように保存する
+  //フェーズ 02//
+  server: {key:値}どっちも取ってくる
+  client: succeesufuly のメッセージを出して"localost"+key
+  　　　　　/key には、hashmap[key]を表示する。
+  ↑hashmap = [];
+  db.departments.contents[0]//配列ではないから取れない。
+  だから hashmap を定義して、Object.keys(result)[0]とかで取ってこれる。
+  ↑ 確かどっかに書いた気がする github の CSnote を見てみる。
+  ////////////////////////////////////////////////
+  続き
+  実際に送信してみる。
+  そこからエラーが出るから、server を調節して DB も作っていく。
+  {userInput:randomURL}として送信しているから、db のテーブル contents のみでいけるのではないか?取り出す時に json 形式に戻せば良いだけだから。
+  ↑ もう一度全手順を追って、それで問題がないか確かめる。
+  続き
+  random がそうしても表示されない。なんでなのか原因を探る。
+
+いけた!
+次はとりあえず contents のみ表示できるようにする。
+↓
+show all button を押したらエラーが発生した。
+
+//続き
+これを見れば原因がわかると思う。
+
+SyntaxError: Unexpected token / in JSON at position 0
+データはこれ
+{"content":"{\"userInput\":\"//Hello, Monaco Editor!\",\"random\":10}"}]
+
+ChatGPT
+このエラーは、JSON 形式として解析しようとしたときに予期しないトークン（Unexpected token）が見つかったことを示しています。具体的には、データが正しい JSON 形式ではない可能性があります。データの内容を見てみると、content がダブルクオートで囲まれた JSON 文字列になっているようです。正しい JSON 形式では、content の値は JSON オブジェクトである必要があります。
+
+正しい JSON 形式にするためには、content の値を JSON オブジェクトに変更する必要があります。例えば、以下のように修正します。
+
+json
+Copy code
+{"content":{"userInput":"//Hello, Monaco Editor!","random":10}}
+このように修正すると、JSON として正しい形式になります。その後、このデータを解析する際には SyntaxError が発生しなくなります。
 
 ↓
-send したら、何かしらのメッセージを表示するようにする。
-それと同時にリンクを作成する。
-こんな感じ
-"your snippet is successfully saved!(link here)"
+多分 json 形式で db に送信しているからエラーが出るんだと思う。
+だって db の content は違う型だから。
+そう。
+その前に json.stringfy と.parse をごっちゃにして書いてるけど違いわかってる?
+↓
+json.parse: 文字列->json へ
+json.stringfy:json->文字列へ
+
+# 同時進行 01 ↓
+
+goal: json,文字列系のエラーを克服できた。今度は client の show ボタンを hello~から表示できるようにしたい。
+
+その前にボタンを押した時のエラーを直す。
+
+# 今!同時進行 02
+
+random を 10 ではなく random な数字を使って送信できるようにする。
+できたら git commit -m "send data randomURL and content"にする。
