@@ -70,8 +70,17 @@ snippetsButton.addEventListener('click', async()=>{
   try{
     //5501にリクエストを送信して結果を待つ
     const response = await fetch('http://localhost:5501/')
-    const data = await response.json();
-    snippetsElement.textContent = JSON.stringify(data);
+    const dataArr = await response.json();
+    // snippetsElement.textContent = JSON.stringify(data);
+    //snippetsElement.textContent = data;
+    //objはjson.
+  
+    dataArr.forEach(obj => {
+      const contentObj = JSON.parse(obj.content);
+      const userInput = contentObj.userInput;
+      snippetsElement.textContent += userInput + '\n';
+    });
+    
     //↑1ここのdataの所でまずcontentsの中身だけを表示する必要がある
     //2表示できたらdataをobject.keyとかで表示する。
     //3新しいdirを作ってそこにdataをインポートしてobject.valueを表示する

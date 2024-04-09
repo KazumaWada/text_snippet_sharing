@@ -262,13 +262,8 @@ Copy code
 json.parse: 文字列->json へ
 json.stringfy:json->文字列へ
 
-# 同時進行 01 ↓
+# 今
 
 goal: json,文字列系のエラーを克服できた。今度は client の show ボタンを hello~から表示できるようにしたい。
 
 その前にボタンを押した時のエラーを直す。
-
-# 今!同時進行 02
-
-random を 10 ではなく random な数字を使って送信できるようにする。
-できたら git commit -m "send data randomURL and content"にする。

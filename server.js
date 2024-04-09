@@ -16,18 +16,25 @@ app.use(cors({
 app.get('/', (req, res) => {
   db.connection.query('SELECT content FROM departments', (err, results) => {
     if (err) {
-      console.log('全データ取得しようとしたらエラー', err);
+      console.log('DBデータ取得エラー', err);
       res.status(500).send('error fetching data');
       return;
     }
-    //res.json(results);
+    // res.json(results);
+    //{\"userInput\":\"//Hello, Monaco Editor!\",\"random\":\"zjaVOu3Twh\"}"}]
+    // const contentObj = JSON.parse(results);
+    // console.log(contentObj);
+    // const userInput = contentObj.userInput;
+    // res.json({userInput:userInput});
+    //jsonデータをclientに渡す。
+    res.json(results);//expressでは、jsonだけでjson.parseの意味になる
     //DBからgetしたデータ//
     //{"content":"{\"userInput\":\"//Hello, Monaco Editor!\",\"random\":10}"}].content
-    const contentObj = JSON.parse(results[0].content);
-    const userInput = contentObj.userInput;
-    const random = contentObj.random;
+    // const contentObj = JSON.parse(results[0].content);
+    // const userInput = contentObj.userInput;
+    // const random = contentObj.random;
 
-    res.json({userInput: userInput, random:random});
+    // res.json({userInput: userInput, random:random});
   });
 });
 
