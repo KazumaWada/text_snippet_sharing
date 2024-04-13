@@ -14,7 +14,7 @@ const randomURL = generateRandomURL(10);
 // Monaco EditorのCDNから読み込む
 require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } }); 
 
-//monaco editorの初期化
+//monaco editorの効果が聞いているfunctionという意味
 require(['vs/editor/editor.main'], function () {
   let editor = monaco.editor.create(document.getElementById('editor'), {
     value: '//Hello, Monaco Editor!',
@@ -32,9 +32,6 @@ require(['vs/editor/editor.main'], function () {
     let userInput = editor.getModel().getValue();
     let random = randomURL;
     console.log("user input: ", userInput + "random",random);
-
-    //fetchを使用してPOSTリクエストを送信
-	  //送信する先のurlを示している。つまりサーバーのurl
     
     fetch('http://localhost:5501', { 
       method: 'POST',//postメソッドでデータを送信している
@@ -50,17 +47,37 @@ require(['vs/editor/editor.main'], function () {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      return response.text();
+      //return response.text();
+      return response.json();
     })
+    //after posted, received ${data} from server
+    //json(db.connection.query('SELECT content FROM departments')
     .then(data => {
-      console.log(data);
+      console.log("data" + JSON.stringify(data));//dataはinserted succeessfullyと出ている。wow..
+      //??
+      const randomURL = JSON.stringify(data);
+      //suceess message
+       // 成功メッセージの表示
+      let messageEle = document.getElementById('snippetStoredMessage')
+      messageEle.style.display = 'block';
+
+     // リンクの設定
+      let linkEle = document.getElementById('linkForSnippet')
+      linkEle.textContent = "http://127.0.0.1:5500/index.html/" + randomURL;
+      linkEle.href = "./" + randomURL;
+      linkEle.style.display = 'block';
     })
     .catch(error => {
       console.error('Error:', error);
     });
   });
 });//monaco editor module
+///////////////////////////////////////////////
 
+
+
+
+///////////////////////////////////////////////
 //////serverからfetchしてsnippetを表示する
 //buttonIdの取得
 let snippetsButton = document.getElementById('snippetsButton');
@@ -89,5 +106,3 @@ snippetsButton.addEventListener('click', async()=>{
     console.error('error fetching data:', error);
   }
 });
-
-

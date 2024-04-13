@@ -38,6 +38,32 @@ app.get('/', (req, res) => {
   });
 });
 
+// サーバー側でランダムなURLに対応するエンドポイントを作成する部分
+// /:これで動的にrouteが扱われる事ができている。
+// /:randomURLはexpressルーティングによって提供されているパラメーター。(ってことはreq.params.randomURLも元々備わっている。)
+//randomURLのおかげでいちいちひとつづつファイル(エンドポイント)を作らなくて良い、変更が容易
+app.get('/index.html/:randomURL', (req, res) => {
+  console.log("app get randomURL")
+  const random = req.params.randomURL; // URLからランダムな部分を取得
+  //DBのrandom列からrandomURLと一致する行を取得
+  db.connection.query('SELECT content FROM departments WHERE random = ?', [random], (err, results) => {
+    if (err) {
+      console.log('DBデータ取得エラー', err);
+      res.status(500).send('error fetching data');
+      return;
+    }
+    if (results.length === 0) {
+      // 該当するデータが見つからない場合は404を返す
+      res.status(404).send('Data not found');
+      return;
+    }
+    const content = JSON.parse(results[0].content);
+    const userInput = content.userInput;
+    res.send(userInput); // データをクライアント側に返す
+  });
+});
+
+
 // POSTリクエストを処理するエンドポイントを追加
 //DBにpost
 
@@ -60,8 +86,8 @@ app.post('/', (req, res) => {
         random: random
       });
       
-      console.log("user input:", userInput);//undefined
-      console.log("random: ",random);//undefined
+      console.log("user input:", userInput);
+      console.log("random: ",random);
       db.connection.query('INSERT INTO departments (content) VALUES (?)', [clientData], (err, results) => {
         if (err) {
           console.error('クエリの実行に失敗しました。', err);

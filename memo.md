@@ -262,8 +262,84 @@ Copy code
 json.parse: 文字列->json へ
 json.stringfy:json->文字列へ
 
+goal: json,文字列系のエラーを克服できた。今度は client の show ボタンを hello~から表示できるようにしたい。done.
+
 # 今
 
-goal: json,文字列系のエラーを克服できた。今度は client の show ボタンを hello~から表示できるようにしたい。
+## 同時進行 01
 
-その前にボタンを押した時のエラーを直す。
+一回通信するごとに、refresh する必要がある。
+(random が同じ文字列になっている。show が 2 倍表示されてしまっている)
+
+## 同時進行 02
+
+送信できたらメッセージと共にリンクを表示する。
+↓
+続き
+random をどうやって取ってきたらいいか。
+index.js 57 line
+一意なリンクを静的に表示できた。これを active にする必要がある。
+↓
+app.get を書いても機能していない。console が表示されていない。
+続き:
+何かが問題。refresh する必要があるとか??
+今
+app.random が実行されない原因を探っている。
+app.get は client からのリクエストを req.params で取得して、それに合った route があったらその app.get 関数が実行されるようになっている。。
+↓
+html タグの href には全部 url を書かなくていい。/all とかから始めれば良い。
+↓
+今のゴール
+app.get/:randomURL の url とマッチしないらしい。
+
+app.get/:randomURL は本当に正しいのかわかってないからそこから。
+
+- randomURL は元々備わっていて、無駄なエンドポイントを作らなくて良いし、変更が容易にできる。
+  それから app.get の関数を見ていく。
+  ?そもそも client 側で fetch して server で express 使うっていいの?(それが一般的じゃん。)
+  ↓
+
+  続き
+  多分 server 側で randomURL を受け取ってからそれを client に送信するときに、client 側でそのデータが表示されるコードがないまま終わっているからという可能性がある。それを gpt に投げたから、コードを比較してみる。
+  ↓
+  一回 random の流れを全部ここに書いてみてから考えれば??
+  ここが微妙ここが微妙ってやってると全体像が見えず一体何を直しているのか自分でも理解できなくなっているように思う。
+  ↓
+  submit ボタンを押した後の処理で client が server からの data の処理を待っていると、inserted successfully というよく分からないところから data が送られてきてしまっている。
+  ↓
+  構造が複雑になると、app.get,app.post のコード内のデータ通信をもっとわかりやすくする必要があると思う。
+
+一回全部リファクタリングしてみやすくする。
+そもそもリファクタリングについて学んでみる。どのリファクタリングが一番このコードに適しているのか。
+
+## goal01 リファクタリングして一旦 push する。
+
+#index.js#
+randomFunc
+require(monaco editor の)
+
+- send button
+- send する機能
+- server から return された data 処理(一意のリンクを表示)
+  snippet が click された際の処理
+
+↓
+
+```javascript
+require(["vs/editor/editor.main"], function () {
+  let editor = monaco.editor.create(document.getElementById("editor"), {
+    value: "//Hello, Monaco Editor!",
+    language: "javascript",
+    theme: "vs-dark",
+  });
+
+  // エディターのフォントサイズを変更
+  editor.updateOptions({ fontSize: 18 });
+
+  // その他のコード（Monaco Editorに依存しない部分）はここに記述する
+});
+```
+
+これ以外は一度この関数が上に定義されていれば関数の外に書いても大丈夫。let userInput = editor.getModel().getValue();も関数の外に書いて大丈夫。
+
+- とりあえず一旦一意のリンクを表示できたから、一旦それを push して次に index.js をリファクタリングする。
