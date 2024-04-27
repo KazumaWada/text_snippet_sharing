@@ -264,8 +264,6 @@ json.stringfy:json->文字列へ
 
 goal: json,文字列系のエラーを克服できた。今度は client の show ボタンを hello~から表示できるようにしたい。done.
 
-# 今
-
 ## 同時進行 01
 
 一回通信するごとに、refresh する必要がある。
@@ -322,24 +320,105 @@ require(monaco editor の)
 - send する機能
 - server から return された data 処理(一意のリンクを表示)
   snippet が click された際の処理
+  ####################################
+  ↓
+  monaco editor の影響があるから userInput を取得する変数とかは require 内に書かないといけなくなっている。
+  ↓
+  idea01: monacoeditor の影響がある userInput はその関数内に書かなければいけないから、monacoeditor の function を親としたネストされた function を書く必要があるらしい。
+  ↓
+  そもそもリファクタリングする理由は、ネットワーク間通信が何回も行われていてコードを修正するときに何が何の通信かわからなくなっているから。
+  ↓ #今これをやる
+  これらを全部 require ネスト関数でまとめて、その上にコメントで細かく書けば良いんじゃない??
+  --client
+  ##client で必要な全処理
+  require が影響している部分
 
+  - send で data を server へ{sendDataToServer()}
+  - server からのデータを受け取って表示&&/:random にも表示{handleResponse()}
+    require が影響していない部分
+  - 全データを/all に表示
+    client から server へ(userInput,random 送信)sendDatatoServer
+    server から DB へ(userInput,random の格納)handkeResponse
+    DB から server へ(server でコードを書く)(格納したものを取ってくる)
+
+    今
+    response が定義されていないが、定義すると、読み込みでエラーになる。多分 expres の何か。以前はうまく定義されていたのに何が原因か前のコード(github から取ってくる)と今のコードをはっつけて gpt に聞いてみる。
+    ↓
+    handleresponse の引数は server からのデータが入る。response と data2 つあるけど(response,data)、以前のコードの response は一体何に使われていたのか調べる。
+    response: server からのデータを格納する変数(http,header など含まれている)
+    data: server からのデータの変数(response.json をしているから json データのみが入っている。)
+    ↓
+    だから response と data は同じ。
+
+    --server
+    app.get,post で、それぞれ/だけでなくしっかり他の router でそれぞれ受け取れば、リファクタリングしなくてもいいと思う。(goal02 につながる)
+
+server からの data を random だけ送信すれば、
+const randomURL = JSON.stringify(response);と簡単に書ける。
+↓
+app.get/:random から random だけ送信しようと思ったけど、そもそもこの関数が発火していない。
 ↓
 
-```javascript
-require(["vs/editor/editor.main"], function () {
-  let editor = monaco.editor.create(document.getElementById("editor"), {
-    value: "//Hello, Monaco Editor!",
-    language: "javascript",
-    theme: "vs-dark",
-  });
+1.randomURL をていいする必要がある?
+const randomURL = req.params.randomURL; // ルーティングパラメータを取得する
 
-  // エディターのフォントサイズを変更
-  editor.updateOptions({ fontSize: 18 });
+2.db.connection.query('SELECT content FROM departments WHERE random = ?', [randomURL], (err, results) => {
+で取ってきているのは random だけでなく、全体を取ってきているから results[0].random と書く必要がある??
 
-  // その他のコード（Monaco Editorに依存しない部分）はここに記述する
-});
-```
+なぜ random を取得したのに results ではなく、results[0].content とかくの??results の中は random が入ってるんじゃないの?
+この質問の回答を読んで理解する。
+↓
 
-これ以外は一度この関数が上に定義されていれば関数の外に書いても大丈夫。let userInput = editor.getModel().getValue();も関数の外に書いて大丈夫。
+そもそも app.getrandom が発火していない。それを解決してから色々と解決する必要がる。まずは発火させるためにどうすればいいか考える。
 
-- とりあえず一旦一意のリンクを表示できたから、一旦それを push して次に index.js をリファクタリングする。
+sendDatatoserver で root に fetch しているけど、/:random に送信している場所がない。
+
+だから、handleClient 内に書いても既にデータを取ってきているから、とかそういう問題ではないか。
+
+fetch: この url に送信
+app.get,post: その url に行ってデータを見つけてくる。
+↓
+randomURL の場合、
+client が/:randomURL にデータを送信(その前に randomURL の変数を定義しておく必要がある。)
+
+実現したいこと。
+
+c: userinput,random->s:userinput,random->db:userinput,random
+[重要]
+多分、client がデータを送信したら、一回の通信で randomURL が一気に送信されてしまうから複雑になるんだと思う。client が最初に useriput,random を送信したら、サクセスメッセージと randomURL のボタンを表示して、次に client がそれをクリックしたら/:randomURL の挙動が発生するみたいなコードの書き方がもっと連続したコードではなく、一回ずつ区切ってコードを実行できると思うし、そっちの方が見やすいんだと思う。
+
+[今 01]
+第一フェーズ
+client:
+userInput,random 送信
+server: DB に格納.結果を client へ報告
+client: サクセスメッセージ&&snippet link button を表示する
+
+第 2 フェーズ
+client: snippet button をクリックする
+fetch で/:randomURL にデータを送信する
+server: /:randomURL で見つけてきてそれに対応する userInput データを DB から app.get してくる。それを return する
+client: /:randomURL という動的なファイルでそれを受け取って表示する(fetch 内の.the
+
+- 分からないこと
+  ファイルはどうやって作成されるの?ファイル名はどうすればいいの?どうやって毎回違うファイル名が生成されて表示されるの??
+
+# goal02
+
+##shwoallsnippet##
+client が server からのデータを待つ server が DB のデータを res.send で送る()← 多分/all という route にした方が app.get で root にしちゃうと何かとかぶるからうまくデータの通信が行われていないんだと思う。
+↓
+snippets と index の html ファイルをどの操作をどっちに書くのか決める。
+
+index:何も書かない
+snippets:全部書く
+↑
+これの方が完全に分離できていい。
+[今 02]
+snippets.html と snippets.js に全部書く事にした
+
+# 続き(/all)
+
+fetch を express とか cores とかこんがらがっている。だから最初に"/"で成功した fetch の書き方をそのまま snippets.js でも使えるようにする。
+↓
+全てのデータを表示できたから次は/all ページに飛べるようにする

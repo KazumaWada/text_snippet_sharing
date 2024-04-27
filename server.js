@@ -11,62 +11,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type'] // Content-Typeを許可する
 }));
 
-// GETリクエストを処理するエンドポイントを追加
-//DBからget
-app.get('/', (req, res) => {
-  db.connection.query('SELECT content FROM departments', (err, results) => {
-    if (err) {
-      console.log('DBデータ取得エラー', err);
-      res.status(500).send('error fetching data');
-      return;
-    }
-    // res.json(results);
-    //{\"userInput\":\"//Hello, Monaco Editor!\",\"random\":\"zjaVOu3Twh\"}"}]
-    // const contentObj = JSON.parse(results);
-    // console.log(contentObj);
-    // const userInput = contentObj.userInput;
-    // res.json({userInput:userInput});
-    //jsonデータをclientに渡す。
-    res.json(results);//expressでは、jsonだけでjson.parseの意味になる
-    //DBからgetしたデータ//
-    //{"content":"{\"userInput\":\"//Hello, Monaco Editor!\",\"random\":10}"}].content
-    // const contentObj = JSON.parse(results[0].content);
-    // const userInput = contentObj.userInput;
-    // const random = contentObj.random;
-
-    // res.json({userInput: userInput, random:random});
-  });
-});
-
-// サーバー側でランダムなURLに対応するエンドポイントを作成する部分
-// /:これで動的にrouteが扱われる事ができている。
-// /:randomURLはexpressルーティングによって提供されているパラメーター。(ってことはreq.params.randomURLも元々備わっている。)
-//randomURLのおかげでいちいちひとつづつファイル(エンドポイント)を作らなくて良い、変更が容易
-app.get('/index.html/:randomURL', (req, res) => {
-  console.log("app get randomURL")
-  const random = req.params.randomURL; // URLからランダムな部分を取得
-  //DBのrandom列からrandomURLと一致する行を取得
-  db.connection.query('SELECT content FROM departments WHERE random = ?', [random], (err, results) => {
-    if (err) {
-      console.log('DBデータ取得エラー', err);
-      res.status(500).send('error fetching data');
-      return;
-    }
-    if (results.length === 0) {
-      // 該当するデータが見つからない場合は404を返す
-      res.status(404).send('Data not found');
-      return;
-    }
-    const content = JSON.parse(results[0].content);
-    const userInput = content.userInput;
-    res.send(userInput); // データをクライアント側に返す
-  });
-});
-
-
-// POSTリクエストを処理するエンドポイントを追加
-//DBにpost
-
+// "/"というrouteに行ってそこにあるdataを取得してそれを関数内で処理している
+//{userInput,random}をDBにpost(格納)//
 app.post('/', (req, res) => {  
   let data = '';
   req.on('data', chunk => {
@@ -104,6 +50,63 @@ app.post('/', (req, res) => {
     }
   });
 });
+
+//DBから{userInput,random}をget//
+app.get('/', (req, res) => {
+  db.connection.query('SELECT content FROM departments', (err, results) => {
+    if (err) {
+      console.log('DBデータ取得エラー', err);
+      res.status(500).send('error fetching data');
+      return;
+    }
+    //.sendは必要ないの?
+    res.json(results);//expressでは、jsonだけでjson.parseの意味になる
+  });
+});
+
+
+app.get('/all',(req,res) =>{
+  console.log("try to grab all snippets")
+  //{userInput,random}を取ってくる
+  //↑すでにclientで両方取ってくる前提で書かれているから
+  db.connection.query('SELECT content FROM departments', (err, results)=>{
+    if(err){
+      console.log('DBデータ取得エラー', err);
+      res.status(500).send('error fetching data');
+      return;
+    }
+    res.json(results);
+  })
+  //DBからのresをclientへ送信する
+  
+})
+
+//DBからuserInputをgetしてserverへ送る
+//serverへ送る部分はfunctionで分離した方がいいかも。
+app.get('/:randomURL', (req, res) => {
+  console.log("app get randomURL")
+  const random = req.params.randomURL; // 上の:/randomURLの値を取得
+  //DBのrandom列からrandomURLと一致する行を取得
+  //[重要]そもそもこれが間違っているのでは??
+  // db.connection.query('SELECT content FROM departments WHERE random = ?', [random], (err, results) => {
+    db.connection.query('SELECT content FROM departments WHERE JSON_EXTRACT(content, \'$.random\') = ?', [random], (err, results) => {
+    if (err) {
+      console.log('DBデータ取得エラー', err);
+      res.status(500).send('error fetching data');
+      return;
+    }
+    if (results.length === 0) {
+      // 該当するデータが見つからない場合は404を返す
+      res.status(404).send('Data not found');
+      return;
+    }
+    const randomURL = JSON.parse(results);
+    res.send(randomURL); // データをクライアント側に返す
+  });
+});
+
+
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
