@@ -9,9 +9,12 @@ function generateRandomURL(length){
   }
   return randomString;
 }
-const randomURL = generateRandomURL(10);
 
-//monaco editorの効果が聞いているfunctionという意味
+//global
+const randomURL = generateRandomURL(10);
+const linkEle = document.getElementById('linkForSnippet')//button
+
+//monaco editorの効果が聞いているfunction
 require(['vs/editor/editor.main'], function () {
   let editor = monaco.editor.create(document.getElementById('editor'), {
     value: '//Hello, Monaco Editor!',
@@ -35,41 +38,58 @@ require(['vs/editor/editor.main'], function () {
       },
       body: JSON.stringify({ userInput: userInput, random: random })
     })
-    .then(handleResponse)
+    //convert to json for userInput,random
+    .then(response =>{
+      if(!response.ok){
+        throw new Error("Network response was not ok");
+      }
+      suceessMessage();
+      return response.json();
+    })
+    //return neet userInput,random data
+    .then(data =>{
+      let userInput = data.userInput;
+      let random = data.random;
+      console.log("userInput:", userInput);
+      console.log("random:", random);
+      return {userInput: userInput, random: random};
+    })
+    //use userInput,random
+    .then(handleClick)
     .catch(handleError);
   }
-
-  // "/", {userInput,randomURL}
-  //[重要！]randomURLだけ必要なんだから、serverはrandomだけ送信すれば良くない??
-  function handleResponse(response){
-    //definedされていない。
-    if(!response.ok){
-      throw new Error("network response was not ok");
-    }
-    console.log("data" + JSON.stringify(response));//dataはinserted succeessfullyと出ている。wow..
-    
-    const randomURL = JSON.stringify(response);
-    //suceess message
-     // 成功メッセージの表示
-    let messageEle = document.getElementById('snippetStoredMessage')
-    messageEle.style.display = 'block';
-
-   // リンクの設定
-    let linkEle = document.getElementById('linkForSnippet')
-    linkEle.textContent = "http://127.0.0.1:5500/index.html/" + randomURL;
-    linkEle.href = "./" + randomURL;
-    linkEle.style.display = 'block';
-    return response.json();
-  }
-
-  function handleError(error){
-    console.error('Error',error);
-  }
-
+  
   let sendButton = document.getElementById("sendButton");
   sendButton.addEventListener('click',sendDataToServer);
 });//monaco editor module
 
+  function suceessMessage(){
+    let messageEle = document.getElementById('snippetStoredMessage')
+    messageEle.style.display = 'block';
+  }
+
+  function handleClick(data){
+    //window.location.href = 'random.html';
+    console.log("userInput from handleClick: " + data.userInput )
+    console.log("random from handleClick: " + data.random )
+    //button display userInput,random
+    linkEle.style.display = 'block';
+    linkEle.textContent = "show/share snippet";
+  }
+
+  function handleError(error){
+    console.error('Error',error);
+   }
+
+  //if "show/share snipprt" button clicked
+  linkEle.addEventListener('click', async()=>{
+    try{
+      window.location.href = "random.html";
+    }
+    catch(error){
+      console.error('Error: ',error);
+    }
+  })
 //moved to snippets.js//
 // <button id="moveToAll">all snippets</button>
 let moveToAllButton = document.getElementById('moveToAll');

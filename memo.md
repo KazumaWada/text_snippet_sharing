@@ -1,5 +1,5 @@
 Text Snippet Sharing Service
-Pastebin のように、ユーザーがプレーンテキストやコードスニペットを共有できるオンラインコード＆テキストスニペット共有サービスを開発します。このプラットフォームは、ユーザーアカウントの必要がなく、簡単にテキストとコードを共有できるようにする必要があります。
+ユーザーがプレーンテキストやコードスニペットを共有できるオンラインコード＆テキストスニペット共有サービスです。このプラットフォームは、ユーザーアカウントの必要がなく、簡単にテキストとコードを共有できます。
 
 ユーザーは、テキストエリアにテキストやコードを貼り付け、共有コンテンツの一意の URL が生成される機能を持たせる必要があります。この URL は、他の人とコンテンツを共有するために使用できます。一般的なプログラミング言語の構文のハイライトがコア機能として必要です。
 
@@ -384,26 +384,62 @@ client が/:randomURL にデータを送信(その前に randomURL の変数を�
 実現したいこと。
 
 c: userinput,random->s:userinput,random->db:userinput,random
+
+# 続き(snippets の link を{}から一意の値を表示できるようにする)
+
 [重要]
 多分、client がデータを送信したら、一回の通信で randomURL が一気に送信されてしまうから複雑になるんだと思う。client が最初に useriput,random を送信したら、サクセスメッセージと randomURL のボタンを表示して、次に client がそれをクリックしたら/:randomURL の挙動が発生するみたいなコードの書き方がもっと連続したコードではなく、一回ずつ区切ってコードを実行できると思うし、そっちの方が見やすいんだと思う。
 
-[今 01]
-第一フェーズ
-client:
-userInput,random 送信
-server: DB に格納.結果を client へ報告
-client: サクセスメッセージ&&snippet link button を表示する
+handleresponse 内で response を handle する以外のことをやっているし、受け取って送信するとなると、関数内が複雑になる。
 
-第 2 フェーズ
-client: snippet button をクリックする
-fetch で/:randomURL にデータを送信する
-server: /:randomURL で見つけてきてそれに対応する userInput データを DB から app.get してくる。それを return する
-client: /:randomURL という動的なファイルでそれを受け取って表示する(fetch 内の.the
+こう書いてみる。
+##index.js##
+send01: {userInput,random}
+//.then(handleclient01)
+handleclient01: random を受け取る(successfully~&&URL)
+--
+a タグ.click(){
+random.html へ飛ばす
+}
+##random.html##
+random = この url
+object.value(random)
 
-- 分からないこと
-  ファイルはどうやって作成されるの?ファイル名はどうすればいいの?どうやって毎回違うファイル名が生成されて表示されるの??
+[currentProblems]
+1.handleResponse:
+関数内で randomURL が空{}の状態で取得されてしまっている。
+[GOALOF4/30]
+ボタンをクリックしたら、randomURL を取得して、ファイルに飛ぶようにする。そのファイルに userInput を表示させる。
+index.js line85:
 
-# goal02
+- handleResponse で randomURL を取得する
+  server は正常に送信できているから、問題は client にある
+  ↓
+  random.json()と書いたら、それっぽいデータが返ってきた。
+  ↓
+  そもそも"fetch データの response の正しい取得方法"を知らないのが原因
+  ↓
+  .then()を使って data を取得することができた。
+  ↓
+  .then 内で関数を使って他の関数に飛ばす事はできない。
+  ↓
+  [今]
+  .then 内で取得した変数(userInput,random)を次の.then へ渡すために、.then()内で　 return { userInput: userInput, random: random };のように書いて実装する必要がある。
+- randomURL に飛ばしてブラウザを正常に表示させる。
+- randomURL のブラウザの userInput をどうやって表示させるのか考える
+
+  2.link.href.click:(解決)
+  random.html に飛ばない。
+  ->当たり前だけど url をクリックすると url に飛ぶから。
+  ってことは、url にするか、ボタンにして random.html に飛ばすか選択する必要がある。
+  ↓
+  pastabin では snippet を作成したら新しいページに飛んで、ボタンで結果を見ることができる。
+  ↓
+  a タグではなくボタンにした。
+
+3.
+
+# goal02(done)
 
 ##shwoallsnippet##
 client が server からのデータを待つ server が DB のデータを res.send で送る()← 多分/all という route にした方が app.get で root にしちゃうと何かとかぶるからうまくデータの通信が行われていないんだと思う。
@@ -416,9 +452,3 @@ snippets:全部書く
 これの方が完全に分離できていい。
 [今 02]
 snippets.html と snippets.js に全部書く事にした
-
-# 続き(/all)
-
-fetch を express とか cores とかこんがらがっている。だから最初に"/"で成功した fetch の書き方をそのまま snippets.js でも使えるようにする。
-↓
-全てのデータを表示できたから次は/all ページに飛べるようにする

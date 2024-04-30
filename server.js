@@ -11,8 +11,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type'] // Content-Typeを許可する
 }));
 
-// "/"というrouteに行ってそこにあるdataを取得してそれを関数内で処理している
-//{userInput,random}をDBにpost(格納)//
+// {userInput,random}をDBに格納
 app.post('/', (req, res) => {  
   let data = '';
   req.on('data', chunk => {
@@ -31,17 +30,19 @@ app.post('/', (req, res) => {
         userInput: userInput,
         random: random
       });
-      
-      console.log("user input:", userInput);
-      console.log("random: ",random);
+      console.log("before insert user input:" + userInput);
+      console.log("before insert random: " + random);
       db.connection.query('INSERT INTO departments (content) VALUES (?)', [clientData], (err, results) => {
         if (err) {
           console.error('クエリの実行に失敗しました。', err);
           res.status(500).send('Internal Server Error');
         } else {
-          // console.log('クエリの実行結果:', results);
-          console.log("clientData: "+clientData);
-          res.status(200).json({ message: 'Data inserted successfully' });
+          //成功メッセージ
+          console.log('Data successfully inserted to DB');
+          console.log("after insert user input:" + userInput);
+          console.log("after insert random: " + random);
+          //成功したらDBに挿入されたデータを返す
+          res.status(200).json({ userInput: userInput, random: random });
         }
       });
     } catch (error) {
@@ -63,23 +64,6 @@ app.get('/', (req, res) => {
     res.json(results);//expressでは、jsonだけでjson.parseの意味になる
   });
 });
-
-
-app.get('/all',(req,res) =>{
-  console.log("try to grab all snippets")
-  //{userInput,random}を取ってくる
-  //↑すでにclientで両方取ってくる前提で書かれているから
-  db.connection.query('SELECT content FROM departments', (err, results)=>{
-    if(err){
-      console.log('DBデータ取得エラー', err);
-      res.status(500).send('error fetching data');
-      return;
-    }
-    res.json(results);
-  })
-  //DBからのresをclientへ送信する
-  
-})
 
 //DBからuserInputをgetしてserverへ送る
 //serverへ送る部分はfunctionで分離した方がいいかも。
@@ -105,7 +89,21 @@ app.get('/:randomURL', (req, res) => {
   });
 });
 
-
+app.get('/all',(req,res) =>{
+  console.log("try to grab all snippets")
+  //{userInput,random}を取ってくる
+  //↑すでにclientで両方取ってくる前提で書かれているから
+  db.connection.query('SELECT content FROM departments', (err, results)=>{
+    if(err){
+      console.log('DBデータ取得エラー', err);
+      res.status(500).send('error fetching data');
+      return;
+    }
+    res.json(results);
+  })
+  //DBからのresをclientへ送信する
+  
+})
 
 
 app.listen(PORT, () => {
