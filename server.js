@@ -11,9 +11,11 @@ app.use(cors({
   methods: ['GET', 'POST'], // 許可するHTTPメソッド
   allowedHeaders: ['Content-Type'] // Content-Typeを許可する
 }));
-//clientに/snippetsのアクセスを許可
+//clientに/snippetsのアクセスも許可
 app.use('/snippets', express.static('snippets'));
 
+//global//
+const clientRoot = 'http://127.0.0.1:5500';
 
 // {userInput,random}をDBに格納
 app.post('/', (req, res) => {  
@@ -93,6 +95,7 @@ app.post('/random', (req, res) => {
           </head>
           <body>
             <p>${userInput}</p>
+            <a href="${clientRoot}">back to home</a>
           </body>
           </html>`;
       }
