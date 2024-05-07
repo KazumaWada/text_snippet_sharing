@@ -424,31 +424,4 @@ index.js line85:
   .then 内で関数を使って他の関数に飛ばす事はできない。
   ↓
   [今]
-  .then 内で取得した変数(userInput,random)を次の.then へ渡すために、.then()内で　 return { userInput: userInput, random: random };のように書いて実装する必要がある。
-- randomURL に飛ばしてブラウザを正常に表示させる。
-- randomURL のブラウザの userInput をどうやって表示させるのか考える
-
-  2.link.href.click:(解決)
-  random.html に飛ばない。
-  ->当たり前だけど url をクリックすると url に飛ぶから。
-  ってことは、url にするか、ボタンにして random.html に飛ばすか選択する必要がある。
-  ↓
-  pastabin では snippet を作成したら新しいページに飛んで、ボタンで結果を見ることができる。
-  ↓
-  a タグではなくボタンにした。
-
-3.
-
-# goal02(done)
-
-##shwoallsnippet##
-client が server からのデータを待つ server が DB のデータを res.send で送る()← 多分/all という route にした方が app.get で root にしちゃうと何かとかぶるからうまくデータの通信が行われていないんだと思う。
-↓
-snippets と index の html ファイルをどの操作をどっちに書くのか決める。
-
-index:何も書かない
-snippets:全部書く
-↑
-これの方が完全に分離できていい。
-[今 02]
-snippets.html と snippets.js に全部書く事にした
+  ファイルを受け取って表示させることができた。

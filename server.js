@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const app = express();
+const fs = require('fs');//fileSystem
 const PORT = 5501;
 
 // CORS対応のためにcorsミドルウェアを追加
@@ -10,6 +11,9 @@ app.use(cors({
   methods: ['GET', 'POST'], // 許可するHTTPメソッド
   allowedHeaders: ['Content-Type'] // Content-Typeを許可する
 }));
+//clientに/snippetsのアクセスを許可
+app.use('/snippets', express.static('snippets'));
+
 
 // {userInput,random}をDBに格納
 app.post('/', (req, res) => {  
@@ -65,28 +69,55 @@ app.get('/', (req, res) => {
   });
 });
 
-//DBからuserInputをgetしてserverへ送る
-//serverへ送る部分はfunctionで分離した方がいいかも。
-app.get('/:randomURL', (req, res) => {
-  console.log("app get randomURL")
-  const random = req.params.randomURL; // 上の:/randomURLの値を取得
-  //DBのrandom列からrandomURLと一致する行を取得
-  //[重要]そもそもこれが間違っているのでは??
-  // db.connection.query('SELECT content FROM departments WHERE random = ?', [random], (err, results) => {
-    db.connection.query('SELECT content FROM departments WHERE JSON_EXTRACT(content, \'$.random\') = ?', [random], (err, results) => {
-    if (err) {
-      console.log('DBデータ取得エラー', err);
-      res.status(500).send('error fetching data');
-      return;
-    }
-    if (results.length === 0) {
-      // 該当するデータが見つからない場合は404を返す
-      res.status(404).send('Data not found');
-      return;
-    }
-    const randomURL = JSON.parse(results);
-    res.send(randomURL); // データをクライアント側に返す
+//serverにdataが入ったhtmlファイルを送る
+app.post('/random', (req, res) => {
+  //userInput,randomのデータを取得して、jsonに変換する
+  let data = '';
+  req.on('data', chunk => {
+    data += chunk;
   });
+  req.on('end', () => {
+    try {
+      let parsedData = JSON.parse(data);
+      let userInput = parsedData.userInput;
+      let random = parsedData.random;
+      let fileURL = `${random}.html`;
+
+      function htmlContent(userInput) {
+        return `<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Generated HTML</title>
+          </head>
+          <body>
+            <p>${userInput}</p>
+          </body>
+          </html>`;
+      }
+
+      //ファイルを作成&それとfileURLを結びつける
+      fs.writeFile(`snippets/${random}.html`, htmlContent(userInput),(err) =>{
+        if(err){
+          console.error("ファイル作成中にerror発生",err);
+          res.status(500).send('Internal server error');
+          //return;
+        }
+        //send to client(htmlFile&URL connected to it)
+        console.log({fileURL: `http://127.0.0.1:5500/snippets/${fileURL}`,htmlContent: htmlContent});
+        res.status(200).json({fileURL: `http://127.0.0.1:5500/snippets/${fileURL}`,htmlContent: htmlContent});
+      })
+    } catch (error) {
+      console.error('Error parsing json:', error);
+      res.status(400).send('Bad Request');
+    }
+  });
+
+  //3userInput,randomを使って動的ファイルを作成する
+  //4client側に送信する
+  
+  
 });
 
 app.get('/all',(req,res) =>{

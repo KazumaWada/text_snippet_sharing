@@ -13,6 +13,7 @@ function generateRandomURL(length){
 //global
 const randomURL = generateRandomURL(10);
 const linkEle = document.getElementById('linkForSnippet')//button
+const root = "http://localhost:5500/";
 
 //monaco editorの効果が聞いているfunction
 require(['vs/editor/editor.main'], function () {
@@ -26,7 +27,7 @@ require(['vs/editor/editor.main'], function () {
   editor.updateOptions({ fontSize: 18 });
 
   // "/"
-  function sendDataToServer() {
+  function handleSendAndReceiveData() {
     let userInput = editor.getModel().getValue();
     let random = randomURL;
     console.log("user input: ", userInput + "random: ",random);
@@ -54,13 +55,30 @@ require(['vs/editor/editor.main'], function () {
       console.log("random:", random);
       return {userInput: userInput, random: random};
     })
-    //use userInput,random
-    .then(handleClick)
+    //display button which lead to snippet page
+    .then(displayButton)
     .catch(handleError);
+
+  linkEle.addEventListener('click', async()=>{
+    console.log("linkeEle.click" + userInput);//ok
+    console.log("linkEle.click" + random);//ok
+    fetch('http://localhost:5501/random',{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({userInput: userInput, random: random})
+      })
+      .then(response => response.json())
+      .then(handleDataAndJumpToUniquelink)
+      .catch(handleError)
+      //window.location.href = "random.html";
+  })
+
   }
   
   let sendButton = document.getElementById("sendButton");
-  sendButton.addEventListener('click',sendDataToServer);
+  sendButton.addEventListener('click',handleSendAndReceiveData);
 });//monaco editor module
 
   function suceessMessage(){
@@ -68,28 +86,30 @@ require(['vs/editor/editor.main'], function () {
     messageEle.style.display = 'block';
   }
 
-  function handleClick(data){
+  function displayButton(data){
     //window.location.href = 'random.html';
     console.log("userInput from handleClick: " + data.userInput )
     console.log("random from handleClick: " + data.random )
-    //button display userInput,random
+    //button will display after get data
     linkEle.style.display = 'block';
     linkEle.textContent = "show/share snippet";
+  }
+
+  function handleDataAndJumpToUniquelink(data){
+    //返ってきたデータをちゃんとした形に直す。
+    
+    //そのデータの文字列名で作成したファイルに飛ばす。
+    window.location.href = data.fileURL;
   }
 
   function handleError(error){
     console.error('Error',error);
    }
 
-  //if "show/share snipprt" button clicked
-  linkEle.addEventListener('click', async()=>{
-    try{
-      window.location.href = "random.html";
-    }
-    catch(error){
-      console.error('Error: ',error);
-    }
-  })
+  
+
+   
+  
 //moved to snippets.js//
 // <button id="moveToAll">all snippets</button>
 let moveToAllButton = document.getElementById('moveToAll');
